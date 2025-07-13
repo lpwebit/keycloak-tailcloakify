@@ -19,7 +19,7 @@ docker run -d \
   -p 8080:8080 \
   -e KEYCLOAK_ADMIN=admin \
   -e KEYCLOAK_ADMIN_PASSWORD=admin \
-  ghcr.io/your-username/keycloak-tailcloakify:latest
+  ghcr.io/lpwebit/keycloak-tailcloakify:latest
 ```
 
 ### Docker Compose
@@ -28,7 +28,7 @@ docker run -d \
 version: '3.8'
 services:
   keycloak:
-    image: ghcr.io/your-username/keycloak-tailcloakify:latest
+    image: ghcr.io/lpwebit/keycloak-tailcloakify:latest
     ports:
       - "8080:8080"
     environment:
@@ -48,7 +48,7 @@ volumes:
 # values.yaml
 image:
   registry: ghcr.io
-  repository: your-username/keycloak-tailcloakify
+  repository: lpwebit/keycloak-tailcloakify
   tag: latest
 
 auth:
@@ -140,7 +140,7 @@ environment:
 ## Building Locally
 
 ```bash
-git clone https://github.com/your-username/keycloak-tailcloakify.git
+git clone https://github.com/lpwebit/keycloak-tailcloakify.git
 cd keycloak-tailcloakify
 docker build -t keycloak-tailcloakify .
 ```
