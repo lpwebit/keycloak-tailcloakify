@@ -12,14 +12,28 @@ RUN curl -L https://github.com/makerspace-darmstadt/keycloak-vikunja-mapper/rele
     -o keycloak-vikunja-mapper.jar
 
 # Production stage
-FROM bitnami/keycloak:26
+FROM quay.io/keycloak/keycloak:26 AS builder
 
-# Copy the JAR file to providers directory (as user 1001)
-COPY --from=downloader --chown=1001:1001 /tmp/tailcloakify.jar /opt/bitnami/keycloak/providers/
-COPY --from=downloader --chown=1001:1001 /tmp/keycloak-vikunja-mapper.jar /opt/bitnami/keycloak/providers/
+# Copy provider JARs to providers directory (as root during build)
+USER root
+COPY --from=downloader --chown=keycloak:keycloak /tmp/tailcloakify.jar /opt/keycloak/providers/
+COPY --from=downloader --chown=keycloak:keycloak /tmp/keycloak-vikunja-mapper.jar /opt/keycloak/providers/
+
+# Build Keycloak with the providers
+RUN /opt/keycloak/bin/kc.sh build
+
+# Final production stage
+FROM quay.io/keycloak/keycloak:26
+
+# Copy the optimized Keycloak build from builder
+COPY --from=builder /opt/keycloak/ /opt/keycloak/
+
+# Set working directory
+WORKDIR /opt/keycloak
 
 # Expose the default Keycloak port
 EXPOSE 8080
 
-# Use the default entrypoint from the base image
-CMD ["/opt/bitnami/scripts/keycloak/run.sh"]
+# Start Keycloak in production mode
+ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
+CMD ["start"]
