@@ -12,7 +12,7 @@ RUN curl -L https://github.com/makerspace-darmstadt/keycloak-vikunja-mapper/rele
     -o keycloak-vikunja-mapper.jar
 
 # Production stage
-FROM keycloak/keycloak:26 AS builder
+FROM keycloak/keycloak:26.4 AS builder
 
 # Copy provider JARs to providers directory (as root during build)
 USER root
@@ -23,7 +23,7 @@ COPY --from=downloader --chown=keycloak:keycloak /tmp/keycloak-vikunja-mapper.ja
 RUN /opt/keycloak/bin/kc.sh build
 
 # Final production stage
-FROM keycloak/keycloak:26
+FROM keycloak/keycloak:26.4
 
 # Copy the optimized Keycloak build from builder
 COPY --from=builder /opt/keycloak/ /opt/keycloak/
