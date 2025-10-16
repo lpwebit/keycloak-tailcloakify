@@ -23,7 +23,7 @@ COPY --from=downloader --chown=keycloak:keycloak /tmp/keycloak-vikunja-mapper.ja
 RUN /opt/keycloak/bin/kc.sh build
 
 # Final production stage
-FROM quay.io/keycloak/keycloak:26
+FROM keycloak/keycloak:26
 
 # Copy the optimized Keycloak build from builder
 COPY --from=builder /opt/keycloak/ /opt/keycloak/
