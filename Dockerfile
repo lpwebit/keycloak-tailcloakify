@@ -12,7 +12,7 @@ RUN curl -L https://github.com/makerspace-darmstadt/keycloak-vikunja-mapper/rele
     -o keycloak-vikunja-mapper.jar
 
 # Production stage
-FROM quay.io/keycloak/keycloak:26 AS builder
+FROM keycloak/keycloak:26 AS builder
 
 # Copy provider JARs to providers directory (as root during build)
 USER root
