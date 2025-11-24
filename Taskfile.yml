@@ -1,0 +1,90 @@
+version: '3'
+
+vars:
+  REGISTRY: registry.lpweb.cloud
+  IMAGE_NAME: lpweb/keycloak
+  TAG: latest
+  FULL_IMAGE: "{{.REGISTRY}}/{{.IMAGE_NAME}}:{{.TAG}}"
+  PLATFORMS: linux/amd64,linux/arm64
+
+tasks:
+  setup:
+    desc: Set up Docker buildx for multi-platform builds
+    cmds:
+      - docker buildx create --name keycloak-builder --driver docker-container --use || true
+      - docker buildx inspect keycloak-builder --bootstrap
+    status:
+      - docker buildx ls | grep -q keycloak-builder
+
+  build:
+    desc: Build multi-architecture image locally (without push)
+    deps: [setup]
+    cmds:
+      - docker buildx build --platform {{.PLATFORMS}} -t {{.FULL_IMAGE}} .
+    summary: |
+      Build the Keycloak image for multiple architectures locally.
+      This does not push to the registry.
+
+  build-push:
+    desc: Build and push multi-architecture image to registry
+    deps: [setup]
+    cmds:
+      - docker buildx build --platform {{.PLATFORMS}} -t {{.FULL_IMAGE}} --push .
+    summary: |
+      Build the Keycloak image for AMD64 and ARM64 architectures
+      and push to {{.REGISTRY}}/{{.IMAGE_NAME}}:{{.TAG}}
+
+  login:
+    desc: Login to the container registry
+    cmds:
+      - docker login {{.REGISTRY}}
+    summary: |
+      Login to {{.REGISTRY}}
+      You will be prompted for your username and password.
+
+  build-local:
+    desc: Build single-platform image for current architecture (fast local testing)
+    cmds:
+      - docker build -t {{.FULL_IMAGE}} .
+    summary: |
+      Build the image for your current platform only (faster for local testing).
+      Use 'task build' or 'task build-push' for multi-architecture builds.
+
+  push-local:
+    desc: Push the locally built image to registry
+    deps: [build-local]
+    cmds:
+      - docker push {{.FULL_IMAGE}}
+
+  test-run:
+    desc: Run the built image locally for testing
+    cmds:
+      - |
+        docker run -d \
+          --name keycloak-tailcloakify-test \
+          -p 8080:8080 \
+          -e KEYCLOAK_ADMIN=admin \
+          -e KEYCLOAK_ADMIN_PASSWORD=admin \
+          {{.FULL_IMAGE}}
+      - echo "Keycloak is starting... Access at http://localhost:8080"
+      - echo "Admin console at http://localhost:8080/admin with admin/admin credentials"
+    summary: |
+      Run the image locally for testing.
+      Keycloak will be available at http://localhost:8080
+      Use 'docker logs -f keycloak-tailcloakify-test' to view logs
+
+  stop-test:
+    desc: Stop and remove the test container
+    cmds:
+      - docker stop keycloak-tailcloakify-test || true
+      - docker rm keycloak-tailcloakify-test || true
+
+  clean:
+    desc: Remove the buildx builder
+    cmds:
+      - docker buildx rm keycloak-builder || true
+
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
